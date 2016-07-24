@@ -1,0 +1,9 @@
+{
+	"org":{
+		"voxsoftware":{
+			"VirtualBox":{
+				"readPath": "./src"
+			}
+		}
+	}
+}
