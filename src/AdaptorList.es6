@@ -10,6 +10,7 @@ class AdaptorList extends Array{
 		if(!(adaptor instanceof Vbox.Adaptor))
 			adaptor= new Vbox.Adaptor(adaptor, this)
 		adaptor.parent= this
+		adaptor.machine= this.machine
 		adaptor.index= this.length
 		super.push(adaptor)
 	}

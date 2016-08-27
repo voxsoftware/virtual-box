@@ -51,6 +51,9 @@ class HostOnlyNetwork extends Vbox.Network{
 		return this.info.NetworkMask= val
 	}
 
+	get type(){
+		return Vbox.NetworkType.HostOnly
+	}
 	
 
 	async change(){

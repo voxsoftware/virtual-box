@@ -1,6 +1,7 @@
 var fs= core.System.IO.Fs.sync
 var fsAsync= core.System.IO.Fs.async
-var vbox= core.org.voxsoftware.VirtualBox
+var Vbox,vbox= core.org.voxsoftware.VirtualBox
+Vbox=vbox
 import Path from 'path'
 import Os from 'os'
 import Child from 'child_process'
@@ -22,11 +23,28 @@ class Manager{
 		return this.machine(options.name)
 	}
 
-	get dhcpServers(){
+	get internal_dhcpServers(){
 		if(!this.$dhcp)
-			this.$dhcp= new vbox.DhcpServers(this)
+			this.$dhcp= new vbox.InternalDhcpServers(this)
 		return this.$dhcp
 	}
+
+	async dhcpServers(){
+		var l= await this.internal_dhcpServers.list()
+		var d= new Vbox.DhcpServerList(this)
+		for(var dc of l){
+			d.push(dc)
+		}
+		return d
+	}
+
+	__createDhcpServer(info){
+		if(info.networkType == Vbox.NetworkType.HostOnly+0)
+			return new Vbox.HostOnlyDhcpServer(info)
+		else
+			return new Vbox.NatDhcpServer(info)
+	}
+
 
 	get networks(){
 		if(!this.$net)
@@ -102,6 +120,27 @@ class Manager{
 	async runningMachines(){
 		var machines=[], machine
 		var r, y, z, result= await this.command(["list", "runningvms"])
+		result= result.data.split("\n")
+		if(result.length>0){
+
+			for(var i=0;i<result.length;i++){
+				r= result[i]
+				if(r){
+					y=r.indexOf("\"")
+					z=r.lastIndexOf("\"")
+					machine= this.machine(r.substring(y+1,z))
+					machines.push(machine)
+				}
+			}	
+
+		}
+		return machines
+
+	}
+
+	async machines(){
+		var machines=[], machine
+		var r, y, z, result= await this.command(["list", "vms"])
 		result= result.data.split("\n")
 		if(result.length>0){
 

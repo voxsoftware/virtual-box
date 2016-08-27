@@ -4,8 +4,8 @@ var init= async function(){
 		var manager= new Vbox.Manager()
 		var machine= manager.machine("homestead-7")
 		var adaptor= await machine.adaptors()
-		vw.info(adaptor)
-
+		vw.info(await manager.machines())
+		return 
 		var net= await machine.sharedFolders()
 		vw.info(net)		
 

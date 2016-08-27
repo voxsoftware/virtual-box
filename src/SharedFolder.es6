@@ -2,7 +2,7 @@ var Vbox=core.org.voxsoftware.VirtualBox
 class SharedFolder{
 
 	constructor(info){
-		this.info= info
+		this.info= info||{}
 	}
 
 	get name(){
@@ -54,7 +54,7 @@ class SharedFolder{
 		if(this.isTransient)
 			args.push("--transient")
 		await manager.command(args)
-		for(var i=index;i<this.parent.length;i++){
+		for(var i=this.index;i<this.parent.length;i++){
 			if(i>0)
 				this.parent[i-1]= this.parent[i]
 		}

@@ -41,12 +41,14 @@ class DhcpServers{
 
 		for(var i=0;i<lista.length;i++){
 			obj= lista[i]
+			obj.name= obj.NetworkName
 			obj.type= obj.NetworkName.startsWith("HostInterfaceNetworking")
 			if(obj.type){
 				y= obj.NetworkName.indexOf("-")
 				obj.NetworkName=obj.NetworkName.substring(y+1)
 			}
 			obj.type= obj.type?"host-only":"nat"
+			obj.networkType= obj.type=="host-only" ? Vbox.NetworkType.HostOnly : Vbox.NetworkType.NatNetwork
 
 		}
 		return lista
@@ -56,7 +58,8 @@ class DhcpServers{
 		var l= [], lista
 		lista= await this._internal_list()
 		for(var i=0;i<lista.length;i++){
-			l.push(Vbox.DhcpServer.create(lista[i], this))
+			s= this.manager.__createDhcpServer(lista[i])
+			l.push(s)
 		}
 		return l
 	}

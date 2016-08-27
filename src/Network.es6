@@ -4,20 +4,45 @@ class Network{
 	constructor(info,networks){
 		this.info= info
 		this.networks=networks
-		if(networks)
-			this.manager= networks.manager
+		
 	}
 
 	get name(){
 		return this.info.NetworkName
 	}
 
+
+	get manager(){
+		return this.networks.manager
+	}
 	
 
 	get IP(){
 		
 	}
 
+	get type(){
+		throw new core.System.NotImplementedException()
+	}
+
+	createDhcpServer(){
+		return this.manager.__createDhcpServer({
+			"networkType": this.type,
+			"NetworkName": this.name
+		})
+	}
+
+	async dhcpServer(){
+		var servers= await this.manager.dhcpServers()
+		
+		for(var i=0;i<servers.length;i++){
+			//vw.info(servers[i].networkName, this.name)
+			if(servers[i].networkName===this.name)
+				return servers[i]
+		}
+
+		return null
+	}
 
 
 	get networkName(){

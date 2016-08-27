@@ -1,6 +1,7 @@
 var Vbox= core.org.voxsoftware.VirtualBox
 var Fs= core.System.IO.Fs
 import Os from 'os'
+import Path from 'path'
 class Machine{
 		
 	constructor(name, manager){
@@ -9,9 +10,10 @@ class Machine{
 	}
 
 	async _internal_adaptors(){
-		var props= await this.properties(), search, str
+		var props= await this.properties(), search, str, info
+		info= await this.info()
 		search= "/VirtualBox/GuestInfo/Net/"
-		var adaptors=[], index, prop, i, y, adaptor
+		var adaptors=[], index, prop, i, y, adaptor, info1
 		for(var id in props){
 			if(id.startsWith(search)){
 				
@@ -25,10 +27,40 @@ class Machine{
 						adaptors[index]= adaptor= {}
 					}
 					adaptor[prop]= props[id].value
+
 				}
 			}
 		}
+		
+		for(var i=0;i<adaptors.length;i++){
+			this._internal_adaptor_networkinfo(adaptors[i], i+1, info)
+		}
 		return adaptors
+	}
+
+	async _internal_adaptor_networkinfo(adaptor,index, info){
+
+		
+		if(info["nic"+index]){
+			adaptor.networkType= info["nic"+index]
+			adaptor.type= info["nictype"+index]
+
+			if(adaptor.networkType=="hostonly"){
+				adaptor.networkName= info["hostonlyadapter"+index]
+			}
+			else if(adaptor.networkType=="natnetwork"){
+				adaptor.networkName= info["nat-network"+index]
+			}
+			else if(adaptor.networkType=="bridged"){
+				adaptor.networkName= info["bridgedadapter"+index]
+			}
+			else if(adaptor.networkType=="intnet"){
+				adaptor.networkName= info["intnet"+index]
+			}
+			else if(adaptor.networkType=="natnetwork"){
+				adaptor.networkName= info["nat-network"+index]
+			}
+		}
 	}
 
 
@@ -43,6 +75,15 @@ class Machine{
 		if(index!=undefined)
 			return ad[0]
 		return ad
+	}
+
+
+	async setCpus(number){
+		await this.manager.command(["modifyvm", this.name, "--cpus", number])
+	}
+
+	async setMemoryMB(number){
+		await this.manager.command(["modifyvm", this.name, "--memory", number])
 	}
 
 
@@ -85,9 +126,8 @@ class Machine{
 	}
 
 
-	async sharedFolders(){
-		
-	}
+
+	
 
 
 	async properties(){
@@ -178,56 +218,76 @@ class Machine{
 		must.push(options.user)
 		must.push('--password')
 		must.push(options.password)
-		must.push('--wait-exit')
+		//must.push('--wait-exit')
 		must.push('--wait-stdout')
 		must.push('--wait-stderr')
-		must.push(path)
+		must.push(options.path)
 		if(options.arguments){
 			must.push("--")
 			for(var i=0;i<options.arguments.length;i++)
 				must.push(options.arguments[i])
 		}
 
-		return await this.manager.command(["guestcontrol", this.name, "execute"].concat(must))	
+		//VBoxManage --nologo guestcontrol "My VM" execute --image "/bin/ls" --username foo --passwordfile bar.txt --wait-exit --wait-stdout -- -l /usr
+		var args= ["guestcontrol", this.name, "run"].concat(must)
+		//vw.log(args.join(" "))
+		return await this.manager.command(args)	
 	}
 
 
 	async copyFrom(options){
 		var must = []
-		must.push(options.src)
-		must.push(options.dest)
-		must.push('--username')
-		must.push(options.user)
-		must.push('--password')
-		must.push(options.password)
+		//must.push(options.src)
+		//must.push(options.dest)
+		if(options.user){
+			must.push('--username')
+			must.push(options.user)
+			must.push('--password')
+			must.push(options.password)
+		}
 		must.push('--verbose')
 		must.push('--follow')
 		must.push('--recursive')
-		
+
+		must.push("--target-directory")
+		must.push(options.dest)
+		must.push(options.src)
+
 		return await this.manager.command(["guestcontrol", this.name, "copyfrom"].concat(must))	
 	}
 
 
 	async copyTo(options){
 		var must = []
-		must.push(options.src)
-		must.push(options.dest)
-		must.push('--username')
-		must.push(options.user)
-		must.push('--password')
-		must.push(options.password)
+		//must.push(options.src)
+		//must.push(options.dest)
+		if(options.user){
+			must.push('--username')
+			must.push(options.user)
+			must.push('--password')
+			must.push(options.password)
+		}
 		must.push('--verbose')
 		must.push('--follow')
 		must.push('--recursive')
-		
-		return await this.manager.command(["guestcontrol", this.name, "copyto"].concat(must))	
+
+		must.push("--target-directory")
+		must.push(options.dest)
+		must.push(options.src)
+
+		var args= ["guestcontrol", this.name, "copyto"].concat(must)
+		return await this.manager.command(args)	
 	}
 
 
 	async writeFile(options){
 		var temp= Os.tmpdir(), er, result
-		var uniqid= new Date().toString(36) + this.name
+		var uniqid= new Date().getTime().toString(36) + this.name
 		var path= Path.join(temp, uniqid)
+		if(!Fs.sync.exists(path))
+			Fs.sync.mkdir(path)
+
+		path= Path.join(path, Path.basename(options.dest))
 		await Fs.async.writeFile(path, options.content)
 		options.src= path
 
@@ -238,7 +298,7 @@ class Machine{
 			er= e
 		}
 
-		await Fs.async.unlink(path)
+		//await Fs.async.unlink(path)
 		if(er){
 			throw er
 		}

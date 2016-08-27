@@ -62,6 +62,10 @@ class NatNetwork extends Vbox.Network{
 		return this.info.enabled=val
 	}
 
+	get type(){
+		return Vbox.NetworkType.NatNetwork
+	}
+
 
 	async change(){
 		var args= []

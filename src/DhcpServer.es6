@@ -1,10 +1,10 @@
 var Vbox= core.org.voxsoftware.VirtualBox
 class DhcpServer{
 	constructor(info, dhcp){
-		this.manager= dhcp?dhcp.manager:null
+		this.parent= dhcp
 		this.info= info||{}
 	}
-
+	/*
 	static create(info, dhcp){
 	
 		if(info.type=="host-only")
@@ -12,12 +12,22 @@ class DhcpServer{
 		else
 			return new Vbox.NatDhcpServer(info,dhcp)
 	}
+	*/
+
+	get manager(){
+		return this.parent.manager
+	}
+
 
 	get IP(){
 		return this.info.IP
 	}
 
 	get name(){
+		return this.info.name
+	}
+
+	get networkName(){
 		return this.info.NetworkName
 	}
 
@@ -47,7 +57,7 @@ class DhcpServer{
 		return this.info.IP=val
 	}
 
-	set name(val){
+	set networkName(val){
 		return this.info.NetworkName=val
 	}
 
@@ -68,7 +78,7 @@ class DhcpServer{
 		manager= dhcpServers.manager||this.manager
 		this.manager= manager
 
-		var args=["dhcpserver", "add", this.commandNetName, this.name]
+		var servers,args=["dhcpserver", "add", this.commandNetName, this.networkName]
 
 		args.push("--ip")
 		args.push(this.IP)
@@ -81,8 +91,14 @@ class DhcpServer{
 
 		args.push("--upperip")
 		args.push(this.upperIp)		
-		vw.log(args)
 		await manager.command(args)
+
+		servers= await manager.internal_dhcpServers.list()
+		for(var server of servers){
+			if(server.networkName==this.networkName){
+				this.info= server.info
+			}
+		}
 	}
 
 
@@ -91,7 +107,7 @@ class DhcpServer{
 		if(!manager)
 			throw new core.System.ArgumentException("Este DhcpServer no ha sido añadido")
 	
-		var args=["dhcpserver", "add", this.commandNetName, this.name, "--enable"]
+		var args=["dhcpserver", "modify", this.commandNetName, this.networkName, "--enable"]
 		await manager.command(args)
 	}
 
@@ -100,16 +116,16 @@ class DhcpServer{
 		if(!manager)
 			throw new core.System.ArgumentException("Este DhcpServer no ha sido añadido")
 	
-		var args=["dhcpserver", "add", this.commandNetName, this.name, "--disable"]
+		var args=["dhcpserver", "modify", this.commandNetName, this.name, "--disable"]
 		await manager.command(args)
 	}
 
-	async modify(){
+	async change(){
 		manager= this.manager
 		if(!manager)
 			throw new core.System.ArgumentException("Este DhcpServer no ha sido añadido")
 	
-		var args=["dhcpserver", "modify", this.commandNetName, this.name]
+		var args=["dhcpserver", "modify", this.commandNetName, this.networkName]
 
 		args.push("--ip")
 		args.push(this.IP)
@@ -122,7 +138,7 @@ class DhcpServer{
 
 		args.push("--upperip")
 		args.push(this.upperIp)		
-
+		//vw.info(args.join(" "))
 		await manager.command(args)
 	}
 
@@ -131,7 +147,7 @@ class DhcpServer{
 		if(!manager)
 			throw new core.System.ArgumentException("Este DhcpServer no ha sido añadido")
 	
-		var args=["dhcpserver", "remove", this.commandNetName, this.name]	
+		var args=["dhcpserver", "remove", this.commandNetName, this.networkName]	
 		await manager.command(args)
 	}
 }

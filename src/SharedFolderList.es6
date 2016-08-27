@@ -3,7 +3,7 @@ class SharedFolderList extends Array{
 	
 	constructor(machine){
 		super()
-		this.machine= this.machine
+		this.machine= machine
 	}
 
 	push(sharedfolder){
@@ -28,6 +28,8 @@ class SharedFolderList extends Array{
 			args.push("--readonly")
 		if(sharedfolder.automount)
 			args.push("--automount")
+
+
 		await this.machine.manager.command(args)
 		this.push(sharedfolder)
 	}
