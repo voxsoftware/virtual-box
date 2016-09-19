@@ -46,6 +46,7 @@ class Adaptor{
 		else if(this.info.networkType=="natnetwork")
 			networks= await this.manager.networks.list(Vbox.NetworkType.HostOnly)
 
+		//vw.log(networks)
 		for(var i=0;i<networks.length;i++){
 			if(networks[i].name== this.networkName)
 				return networks[i]

@@ -40,7 +40,7 @@ class Machine{
 
 	async _internal_adaptor_networkinfo(adaptor,index, info){
 
-		
+
 		if(info["nic"+index]){
 			adaptor.networkType= info["nic"+index]
 			adaptor.type= info["nictype"+index]
@@ -289,6 +289,9 @@ class Machine{
 
 		path= Path.join(path, Path.basename(options.dest))
 		await Fs.async.writeFile(path, options.content)
+
+		//vw.log(path)
+		options.dest= Path.dirname(options.dest)
 		options.src= path
 
 		try{
